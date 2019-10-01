@@ -1,18 +1,19 @@
 import aiohttp
 import asyncio
 import uvicorn
-from fastai import *
-from fastai.vision import *
-from io import BytesIO
-from starlette.applications import Starlette
-from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import HTMLResponse, JSONResponse
-from starlette.staticfiles import StaticFiles
+from fastai import * #Done
+from fastai.text import *
+from fastai.tabular import *
+from io import BytesIO #Done
+from starlette.applications import Starlette #Done
+from starlette.middleware.cors import CORSMiddleware #Done
+from starlette.responses import HTMLResponse, JSONResponse #Done
+from starlette.staticfiles import StaticFiles #Done
 
-export_file_url = 'https://drive.google.com/uc?export=download&id=1Xfng4e6yCubOMxExuPJsmjyKaTPVQKWk'
+export_file_url = 'https://www.dropbox.com/s/5xd9ehlnampx6ep/export.pkl?dl=1'
 export_file_name = 'export.pkl'
 
-classes = ['picasso','van_gogh']
+# classes = ['picasso','van_gogh']
 path = Path(__file__).parent
 
 app = Starlette()
@@ -20,7 +21,7 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Reques
 app.mount('/static', StaticFiles(directory='app/static'))
 
 
-async def download_file(url, dest):
+async def download_file(url, dest): #this is unchanged
     if dest.exists(): return
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -59,8 +60,9 @@ async def homepage(request):
 async def analyze(request):
     img_data = await request.form()
     img_bytes = await (img_data['file'].read())
-    img = open_image(BytesIO(img_bytes))
-    prediction = learn.predict(img)[0]
+    #img = open_image(BytesIO(img_bytes))
+    #prediction = learn.predict(img)[0]
+    prediction = learn.predict("Matt Damon stars", 1, temperature=0.75)
     return JSONResponse({'result': str(prediction)})
 
 
