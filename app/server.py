@@ -58,11 +58,12 @@ async def homepage(request):
 
 @app.route('/analyze', methods=['POST'])
 async def analyze(request):
-    img_data = await request.form()
-    img_bytes = await (img_data['file'].read())
+    img_data = await request.form() #think this stays the same
+    img_bytes = 'Matt Damon stars'
+    #img_bytes = await (img_data['file'].read()) #this is old
     #img = open_image(BytesIO(img_bytes))
     #prediction = learn.predict(img)[0]
-    prediction = "\n".join(learn.predict("Matt Damon stars", 40, temperature=0.75) for _ in range(1))
+    prediction = "\n".join(learn.predict(img_bytes, 40, temperature=0.75) for _ in range(1))
     return JSONResponse({'result': str(prediction)})
 
 
