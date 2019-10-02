@@ -3,16 +3,19 @@ import asyncio
 import uvicorn
 from fastai import *
 from fastai.vision import *
+from fastai.text import *
 from io import BytesIO
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import HTMLResponse, JSONResponse
 from starlette.staticfiles import StaticFiles
+import warnings
+warnings.filterwarnings("ignore")
+
 
 export_file_url = 'https://www.dropbox.com/s/5xd9ehlnampx6ep/export.pkl?dl=1'
 export_file_name = 'export.pkl'
 
-classes = ['picasso', 'van_gogh']
 path = Path(__file__).parent
 
 app = Starlette()
@@ -53,15 +56,21 @@ loop.close()
 async def homepage(request):
     html_file = path / 'view' / 'index.html'
     return HTMLResponse(html_file.open().read())
-
-
+    
 @app.route('/analyze', methods=['POST'])
 async def analyze(request):
-    img_data = await request.form()
-    img_bytes = await (img_data['file'].read())
-    #img = open_image(BytesIO(img_bytes))
-    prediction = "\n".join(learn.predict("Matt Damon stars", 40, temperature=0.75) for _ in range(1))
-    return JSONResponse({'result': str(prediction)})
+
+    inp = await request.form()
+
+    for each in inp:
+        if each == "first_name":
+            content = inp[each]
+
+    prediction = " ".join(learn.predict(content, 105, temperature=0.75) for _ in range(1))
+    prediction = prediction.replace("\n", "")
+    prediction = prediction.replace("xxbos", "")
+
+    return JSONResponse(prediction)
 
 
 if __name__ == '__main__':
