@@ -1,19 +1,17 @@
-import aiohttp
-import asyncio
-import uvicorn
-from fastai import * #Done
+from starlette.applications import Starlette
+from starlette.responses import HTMLResponse, JSONResponse
+from starlette.staticfiles import StaticFiles
+from starlette.middleware.cors import CORSMiddleware
+import uvicorn, aiohttp, asyncio
+from io import BytesIO
+
+from fastai import *
 from fastai.text import *
 from fastai.tabular import *
-from io import BytesIO #Done
-from starlette.applications import Starlette #Done
-from starlette.middleware.cors import CORSMiddleware #Done
-from starlette.responses import HTMLResponse, JSONResponse #Done
-from starlette.staticfiles import StaticFiles #Done
 
 export_file_url = 'https://www.dropbox.com/s/5xd9ehlnampx6ep/export.pkl?dl=1'
 export_file_name = 'export.pkl'
 
-# classes = ['picasso','van_gogh']
 path = Path(__file__).parent
 
 app = Starlette()
@@ -21,14 +19,12 @@ app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_headers=['X-Reques
 app.mount('/static', StaticFiles(directory='app/static'))
 
 
-async def download_file(url, dest): #this is unchanged
+async def download_file(url, dest):
     if dest.exists(): return
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             data = await response.read()
-            with open(dest, 'wb') as f:
-                f.write(data)
-
+            with open(dest, 'wb') as f: f.write(data)
 
 async def setup_learner():
     await download_file(export_file_url, path / export_file_name)
@@ -49,23 +45,28 @@ tasks = [asyncio.ensure_future(setup_learner())]
 learn = loop.run_until_complete(asyncio.gather(*tasks))[0]
 loop.close()
 
-
 @app.route('/')
-async def homepage(request):
-    html_file = path / 'view' / 'index.html'
-    return HTMLResponse(html_file.open().read())
+def index(request):
+    html = path/'view'/'index.html'
+    return HTMLResponse(html.open().read())
 
+# @app.route('/analyze', methods=['POST'])
+# async def analyze(request):
+#     img_data = await request.form() #think this stays the same
+#     img_bytes = 'Matt Damon stars'
+#     #img_bytes = await (img_data['file'].read()) #this is old
+#     #img = open_image(BytesIO(img_bytes))
+#     #prediction = learn.predict(img)[0]
+#     prediction = "\n".join(learn.predict(img_bytes, 40, temperature=0.75) for _ in range(1))
+#     return JSONResponse({'result': str(prediction)})
 
 @app.route('/analyze', methods=['POST'])
 async def analyze(request):
-    img_data = await request.form() #think this stays the same
-    img_bytes = 'Matt Damon stars'
-    #img_bytes = await (img_data['file'].read()) #this is old
-    #img = open_image(BytesIO(img_bytes))
-    #prediction = learn.predict(img)[0]
-    prediction = "\n".join(learn.predict(img_bytes, 40, temperature=0.75) for _ in range(1))
-    return JSONResponse({'result': str(prediction)})
+    data = await request.form()
+    content = data['content']
+    prediction = "\n".join(learn.predict(content, 40, temperature=0.75) for _ in range(1))
 
+    return JSONResponse({'result': EddyScore})
 
 if __name__ == '__main__':
     if 'serve' in sys.argv:
