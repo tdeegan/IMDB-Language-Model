@@ -66,9 +66,10 @@ async def analyze(request):
         if each == "first_name":
             content = inp[each]
 
-    prediction = " ".join(learn.predict(content, 105, temperature=0.75) for _ in range(1))
+    prediction = " ".join(learn.predict(content, 80, temperature=0.75) for _ in range(1))
     prediction = prediction.replace("\n", "")
     prediction = prediction.replace("xxbos", "")
+    prediction = prediction[:prediction.rfind('.')]
 
     return JSONResponse(prediction)
 
